@@ -5,7 +5,7 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import TreeViewPlugin from "./plugins/TreeViewPlugin";
-import ToolbarPlugin from "./plugins/ToolbarPlugin";
+import ToolbarPlugin, {vscode} from "./plugins/ToolbarPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { ListItemNode, ListNode } from "@lexical/list";
@@ -19,6 +19,7 @@ import { TRANSFORMERS } from "@lexical/markdown";
 import ListMaxIndentLevelPlugin from "./plugins/ListMaxIndentLevelPlugin";
 import CodeHighlightPlugin from "./plugins/CodeHighlightPlugin";
 import AutoLinkPlugin from "./plugins/AutoLinkPlugin";
+import {useLexicalComposerContext} from "@lexical/react/LexicalComposerContext";
 
 function Placeholder() {
   return <div className="editor-placeholder">Enter some rich text...</div>;
@@ -47,9 +48,55 @@ const editorConfig = {
   ]
 };
 
+function MyFunPlugin() {
+  const [editor] = useLexicalComposerContext()
+
+  // @ts-ignore
+  // const vscode = acquireVsCodeApi();
+
+  const {text} = vscode.getState()
+  if (text) {
+    editor.setEditorState(editor.parseEditorState(text))
+  }
+
+  // Handle messages sent from the extension to the webview
+  window.addEventListener('message', event => {
+    const message = event.data; // The json data that the extension sent
+    switch (message.type) {
+      case 'update':
+        const text = message.text;
+
+        // Update our webview's content
+        // updateContent(text);
+
+        editor.setEditorState(editor.parseEditorState(text))
+
+        // Then persist state information.
+        // This state is returned in the call to `vscode.getState` below when a webview is reloaded.
+        vscode.setState({ text });
+
+        return;
+    }
+  });
+
+
+  // @ts-ignore
+  // editor.registerUpdateListener(({editorState}) => {
+  //   editorState.read(() => {
+  //     const tmp = $generateHtmlFromNodes(editor)
+  //     console.log(tmp)
+  //   })
+  // })
+
+
+}
+
+
+
 export default function Editor() {
   return (
     <LexicalComposer initialConfig={editorConfig}>
+      <MyFunPlugin />
       <div className="editor-container">
         <ToolbarPlugin />
         <div className="editor-inner">

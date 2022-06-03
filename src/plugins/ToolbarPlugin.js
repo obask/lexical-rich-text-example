@@ -42,6 +42,13 @@ import {
 
 const LowPriority = 1;
 
+// @ts-ignore
+export const vscode = acquireVsCodeApi();
+
+
+// Get a reference to the VS Code webview api.
+// We use this API to post messages back to our extension.
+
 const supportedBlockTypes = new Set([
   "paragraph",
   "quote",
@@ -599,7 +606,15 @@ export default function ToolbarPlugin() {
         <>
           <button
             onClick={() => {
-              editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
+              console.log("UPDATE")
+              editor.update(() =>
+                  vscode.postMessage({
+                    type: 'add',
+                    state: editor.getEditorState().toJSON()
+                  })
+              )
+
+              // editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
             }}
             className={"toolbar-item spaced " + (isBold ? "active" : "")}
             aria-label="Format Bold"
